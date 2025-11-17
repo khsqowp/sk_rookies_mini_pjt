@@ -1,3 +1,4 @@
+streamlit-modal==0.1.2
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.2
 aiosignal==1.4.0
