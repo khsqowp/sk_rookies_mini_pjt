@@ -1,0 +1,5 @@
+CSV[[:space:]]Files/UNSW-NB15_3.csv filter=lfs diff=lfs merge=lfs -text
+vector_db/faiss_index/index.pkl filter=lfs diff=lfs merge=lfs -text
+vector_db/faiss_index/index.faiss filter=lfs diff=lfs merge=lfs -text
+CSV[[:space:]]Files/UNSW-NB15_1.csv filter=lfs diff=lfs merge=lfs -text
+CSV[[:space:]]Files/UNSW-NB15_2.csv filter=lfs diff=lfs merge=lfs -text
