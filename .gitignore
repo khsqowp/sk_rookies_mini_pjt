@@ -63,3 +63,6 @@ vector_db/
 # Temporary files
 *.tmp
 temp/
+
+.idea
+__pycache__
