@@ -1,6 +1,7 @@
 # ============================================
 # file: config.py
 # ============================================
+import json
 from pathlib import Path
 
 # --- 기본 경로 ---
@@ -26,8 +27,15 @@ ANALYSIS_EXTENSIONS = {
     ".pdf", ".js", ".vbs"
 }
 
-# ✅ Mendeley Ransomware PE Header Dataset 기준 피처 (0~1023 바이트)
-FEATURES = [str(i) for i in range(1024)]  # "0", "1", ..., "1023"
+FEATURES_PATH = BASE_DIR / "models" / "ransomware_features.json"
+if FEATURES_PATH.exists():
+    FEATURES = json.loads(FEATURES_PATH.read_text(encoding="utf-8"))
+else:
+    # 아직 학습 전이라 json이 없으면, 일단 전체 0~1023 사용 (훈련용/디버그용)
+    FEATURES = [str(i) for i in range(1024)]
+
+# 확률 보정용 (0.5 근처 확률을 얼마나 키울지/줄일지)
+ADJUST_PROB_GAMMA = 1.0
 
 # 간단한 설명
 FEATURE_DESCRIPTIONS = {
@@ -48,5 +56,3 @@ DEFAULT_ACTION_ON_MALICIOUS = "log"  # "log" / "delete" / "quarantine"
 for p in [MODEL_PATH.parent, LOG_PATH.parent]:
     p.mkdir(parents=True, exist_ok=True)
 
-
-ADJUST_PROB_GAMMA = 0.3

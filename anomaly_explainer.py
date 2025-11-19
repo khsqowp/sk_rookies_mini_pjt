@@ -10,7 +10,7 @@ class AnomalyExplainer:
         data = json.loads(BENIGN_STATS_PATH.read_text(encoding="utf-8"))
         self.stats = data  # {feature: {"mean":..., "std":...}}
 
-    def explain(self, features: Dict[str, float], top_k: int = 5) -> List[Dict]:
+    def explain(self, features: Dict[str, float], top_k: int = 10) -> List[Dict]:
         results = []
         for name in FEATURES:
             if name not in self.stats:

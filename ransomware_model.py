@@ -47,7 +47,7 @@ class RansomwareModel:
             prob_adj = prob_ransom
 
         # label은 "조정된 확률" 기준으로 판정
-        label = int(prob_adj >= 0.5)
+        label = int(prob_adj <= 0.4)
 
         return label, prob_adj
 
@@ -58,6 +58,6 @@ class RansomwareModel:
             anomalies = self.explainer.explain(features)
         return {
             "label": label,            # 0=정상, 1=랜섬웨어
-            "prob_ransom": prob,       # 랜섬웨어 확률
+            "prob_ransom": 1 - prob,       # 랜섬웨어 확률
             "anomalies": anomalies,    # 이상 바이트 TOP K
         }
