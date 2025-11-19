@@ -1,0 +1,44 @@
+{
+  "incident_id": "INC-20251119-171517",
+  "created_at": "2025-11-19T17:15:17.345078",
+  "file_name": "enc (5).exe",
+  "file_path": "/Users/user/Downloads/enc (5).exe",
+  "probability": 0.6649834566586554,
+  "status": "탐지됨",
+  "priority": "중간",
+  "assigned_to": "미지정",
+  "timeline": [
+    {
+      "timestamp": "2025-11-19T17:15:17.345080",
+      "status": "탐지됨",
+      "description": "랜섬웨어 탐지 (확률: 66.50%)"
+    }
+  ],
+  "checklist": [
+    {
+      "task": "초기 분석 완료",
+      "completed": false
+    },
+    {
+      "task": "영향 범위 파악",
+      "completed": false
+    },
+    {
+      "task": "파일 격리/삭제",
+      "completed": false
+    },
+    {
+      "task": "시스템 스캔 실시",
+      "completed": false
+    },
+    {
+      "task": "백업 복구 확인",
+      "completed": false
+    },
+    {
+      "task": "사고 보고서 작성",
+      "completed": false
+    }
+  ],
+  "notes": []
+}

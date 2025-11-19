@@ -2,19 +2,39 @@
 # file: config.py
 # ============================================
 import json
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# .env 파일 로드
+load_dotenv()
 
 # --- 기본 경로 ---
-BASE_DIR = Path(__file__).resolve().parent
+# .env 파일에서 PROJECT_ROOT 로드 (없으면 현재 파일 위치 사용)
+PROJECT_ROOT = os.getenv("PROJECT_ROOT")
+if PROJECT_ROOT:
+    BASE_DIR = Path(PROJECT_ROOT)
+else:
+    BASE_DIR = Path(__file__).resolve().parent
 
-# 감시할 폴더 (예: Downloads)
-DOWNLOAD_DIR = Path.home() / "Downloads"
+# 감시할 폴더 (.env에서 로드 또는 Downloads 폴더)
+TEST_FILES_PATH = os.getenv("TEST_FILES_DIR")
+if TEST_FILES_PATH:
+    DOWNLOAD_DIR = Path(TEST_FILES_PATH)
+else:
+    DOWNLOAD_DIR = Path.home() / "Downloads"
 
 # 랜섬웨어로 판단 시 격리할 폴더 (지금은 안 써도 됨, 옵션용)
 QUARANTINE_DIR = BASE_DIR / "quarantine"
 
 # 모델 & 통계 경로
-MODEL_PATH = BASE_DIR / "models" / "ransom_model.pkl"
+# .env에서 모델 경로 로드 (없으면 기본 경로)
+MODEL_FILE_PATH = os.getenv("MODEL_PATH")
+if MODEL_FILE_PATH:
+    MODEL_PATH = Path(MODEL_FILE_PATH)
+else:
+    MODEL_PATH = BASE_DIR / "models" / "ransom_model.pkl"
+
 BENIGN_STATS_PATH = BASE_DIR / "models" / "benign_stats.json"
 
 # 로그 저장 경로 (JSON Lines 형식)
