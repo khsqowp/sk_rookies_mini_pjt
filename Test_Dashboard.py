@@ -15,6 +15,7 @@ from pathlib import Path
 import json
 import queue
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -57,7 +58,7 @@ MODEL_FILE_PATH = os.getenv("MODEL_PATH")
 if MODEL_FILE_PATH:
     MODEL_PATH = Path(MODEL_FILE_PATH)
 else:
-    MODEL_PATH = BASE_DIR / "best_model_pe.keras"
+    MODEL_PATH = BASE_DIR / "models" / "ransom_model.pkl"
 
 # 테스트 파일 디렉토리 (.env에서 로드 또는 기본값)
 TEST_FILES_PATH = os.getenv("TEST_FILES_DIR")
@@ -323,8 +324,72 @@ def render_period_dashboard(df, period_name):
         ransomware_df = df[df['label'] == 1]
         if not ransomware_df.empty:
             st.markdown("### 🚨 탐지된 이상 파일 목록")
+
+            # 상세 정보를 포함한 확장 가능한 테이블
+            for idx, row in ransomware_df.sort_values('probability', ascending=False).iterrows():
+                with st.expander(
+                    f"🔴 **{row['file_name']}** - 위험도: {row['probability']:.2%} | {row['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}"
+                ):
+                    col1, col2 = st.columns([1, 1])
+
+                    with col1:
+                        st.markdown("#### 📊 기본 정보")
+                        st.write(f"**파일명:** {row['file_name']}")
+                        st.write(f"**탐지 시각:** {row['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}")
+                        st.write(f"**랜섬웨어 확률:** {row['probability']:.2%}")
+                        st.write(f"**위험 등급:** {'🔴 고위험' if row['probability'] >= 0.8 else '🟠 중위험' if row['probability'] >= 0.5 else '🟡 저위험'}")
+
+                    with col2:
+                        st.markdown("#### 🎯 탐지 이상치")
+                        if 'anomalies' in row and row['anomalies']:
+                            for i, anom in enumerate(row['anomalies'][:3]):  # 상위 3개만 표시
+                                st.write(f"**{i+1}.** {anom.get('description', 'N/A')}")
+                                st.write(f"   값: {anom.get('value', 'N/A')}, Z-score: {anom.get('z_score', 0):.2f}")
+                        else:
+                            st.write("이상치 정보 없음")
+
+                    # 탐지 스토리 (있는 경우)
+                    if 'detection_story' in row and row['detection_story']:
+                        st.markdown("#### 📖 탐지 스토리")
+                        st.info(row['detection_story'])
+
+                    # What-If 시나리오 (있는 경우)
+                    if 'what_if_scenario' in row and row['what_if_scenario']:
+                        st.markdown("#### 💭 What-If 시나리오")
+                        scenario = row['what_if_scenario']
+                        # 문자열인 경우와 딕셔너리인 경우 모두 처리
+                        if isinstance(scenario, str):
+                            st.warning(scenario)
+                        elif isinstance(scenario, dict):
+                            st.warning(f"**만약 탐지하지 못했다면?**\n\n{scenario.get('scenario_description', 'N/A')}")
+
+                    # 비즈니스 임팩트 (있는 경우)
+                    if 'business_impact' in row and row['business_impact']:
+                        impact = row['business_impact']
+                        # 딕셔너리인 경우만 표시
+                        if isinstance(impact, dict):
+                            st.markdown("#### 💰 비즈니스 임팩트")
+
+                            col_a, col_b, col_c = st.columns(3)
+                            with col_a:
+                                direct_damage = impact.get('direct_damage', {})
+                                direct = direct_damage.get('total', 0) if isinstance(direct_damage, dict) else 0
+                                st.metric("직접 피해 예상액", f"₩{direct:,.0f}")
+                            with col_b:
+                                indirect_damage = impact.get('indirect_damage', {})
+                                indirect = indirect_damage.get('total', 0) if isinstance(indirect_damage, dict) else 0
+                                st.metric("간접 피해 예상액", f"₩{indirect:,.0f}")
+                            with col_c:
+                                total = impact.get('total_estimated_loss', 0)
+                                st.metric("총 예상 손실", f"₩{total:,.0f}")
+
+            # 요약 테이블도 표시
+            st.markdown("#### 📋 요약 테이블")
+            summary_df = ransomware_df[['timestamp', 'file_name', 'probability']].copy()
+            summary_df['timestamp'] = summary_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            summary_df['probability'] = summary_df['probability'].apply(lambda x: f"{x:.2%}")
             st.dataframe(
-                ransomware_df[['timestamp', 'file_name', 'probability']].sort_values('probability', ascending=False),
+                summary_df.sort_values('probability', ascending=False),
                 use_container_width=True,
                 key=f"ransom_list_{period_name}"
             )
@@ -413,6 +478,170 @@ def create_risk_gauge_chart(avg_probability):
     fig.update_layout(height=300)
     return fig
 
+def create_hourly_heatmap(df):
+    """시간대별 위협 히트맵"""
+    if df.empty:
+        return None
+
+    df_copy = df.copy()
+    df_copy['hour'] = df_copy['timestamp'].dt.hour
+    df_copy['date'] = df_copy['timestamp'].dt.date
+
+    # 시간대별, 날짜별 위협 카운트
+    heatmap_data = df_copy[df_copy['label'] == 1].groupby(['date', 'hour']).size().reset_index(name='count')
+
+    if heatmap_data.empty:
+        return None
+
+    # 피벗 테이블 생성
+    pivot_table = heatmap_data.pivot(index='date', columns='hour', values='count').fillna(0)
+
+    fig = go.Figure(data=go.Heatmap(
+        z=pivot_table.values,
+        x=[f"{h}시" for h in pivot_table.columns],
+        y=[str(d) for d in pivot_table.index],
+        colorscale='Reds',
+        hoverongaps=False,
+        colorbar=dict(title="탐지 수")
+    ))
+
+    fig.update_layout(
+        title='시간대별 위협 탐지 히트맵',
+        xaxis_title='시간대',
+        yaxis_title='날짜',
+        height=400
+    )
+
+    return fig
+
+def create_threat_type_pie(df):
+    """위협 vs 정상 파이 차트"""
+    if df.empty:
+        return None
+
+    label_counts = df['label'].value_counts()
+    labels = ['정상' if k == 0 else '랜섬웨어' for k in label_counts.index]
+
+    fig = go.Figure(data=[go.Pie(
+        labels=labels,
+        values=label_counts.values,
+        hole=0.4,
+        marker=dict(colors=['#28a745', '#dc3545']),
+        textinfo='label+percent+value',
+        textfont_size=14
+    )])
+
+    fig.update_layout(
+        title='탐지 유형 분포',
+        height=400,
+        showlegend=True
+    )
+
+    return fig
+
+def create_cumulative_threat_chart(df):
+    """누적 위협 탐지 추이"""
+    if df.empty:
+        return None
+
+    df_threats = df[df['label'] == 1].copy()
+    if df_threats.empty:
+        return None
+
+    df_threats = df_threats.sort_values('timestamp')
+    df_threats['cumulative'] = range(1, len(df_threats) + 1)
+
+    fig = px.area(
+        df_threats,
+        x='timestamp',
+        y='cumulative',
+        title='누적 위협 탐지 추이',
+        labels={'timestamp': '시간', 'cumulative': '누적 탐지 수'}
+    )
+
+    fig.update_traces(
+        fill='tozeroy',
+        line_color='#dc3545',
+        fillcolor='rgba(220, 53, 69, 0.3)'
+    )
+
+    fig.update_layout(
+        xaxis_title='시간',
+        yaxis_title='누적 위협 탐지 수',
+        height=400,
+        hovermode='x unified'
+    )
+
+    return fig
+
+def create_weekday_bar_chart(df):
+    """요일별 탐지 건수 바 차트"""
+    if df.empty:
+        return None
+
+    df_copy = df.copy()
+    df_copy['weekday'] = df_copy['timestamp'].dt.day_name()
+
+    weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    weekday_kr = {'Monday': '월요일', 'Tuesday': '화요일', 'Wednesday': '수요일',
+                  'Thursday': '목요일', 'Friday': '금요일', 'Saturday': '토요일', 'Sunday': '일요일'}
+
+    weekday_stats = df_copy.groupby(['weekday', 'label']).size().reset_index(name='count')
+    weekday_stats['weekday_kr'] = weekday_stats['weekday'].map(weekday_kr)
+    weekday_stats['label_name'] = weekday_stats['label'].map({0: '정상', 1: '랜섬웨어'})
+
+    # 요일 순서 정렬
+    weekday_stats['weekday_order'] = weekday_stats['weekday'].map({day: i for i, day in enumerate(weekday_order)})
+    weekday_stats = weekday_stats.sort_values('weekday_order')
+
+    fig = px.bar(
+        weekday_stats,
+        x='weekday_kr',
+        y='count',
+        color='label_name',
+        title='요일별 탐지 현황',
+        labels={'weekday_kr': '요일', 'count': '탐지 수', 'label_name': '분류'},
+        color_discrete_map={'정상': '#28a745', '랜섬웨어': '#dc3545'},
+        barmode='group'
+    )
+
+    fig.update_layout(
+        xaxis_title='요일',
+        yaxis_title='탐지 수',
+        height=400,
+        showlegend=True
+    )
+
+    return fig
+
+def create_risk_level_funnel(df):
+    """위험도별 단계 차트"""
+    if df.empty:
+        return None
+
+    ransomware_df = df[df['label'] == 1]
+    if ransomware_df.empty:
+        return None
+
+    critical = len(ransomware_df[ransomware_df['probability'] >= 0.8])
+    high = len(ransomware_df[(ransomware_df['probability'] >= 0.6) & (ransomware_df['probability'] < 0.8)])
+    medium = len(ransomware_df[(ransomware_df['probability'] >= 0.4) & (ransomware_df['probability'] < 0.6)])
+    low = len(ransomware_df[ransomware_df['probability'] < 0.4])
+
+    fig = go.Figure(go.Funnel(
+        y=['긴급 (80%+)', '높음 (60-80%)', '중간 (40-60%)', '낮음 (40% 미만)'],
+        x=[critical, high, medium, low],
+        textinfo="value+percent initial",
+        marker=dict(color=['#dc3545', '#ff6b6b', '#ffc107', '#28a745'])
+    ))
+
+    fig.update_layout(
+        title='위험도별 분포',
+        height=400
+    )
+
+    return fig
+
 # --- 7. 모델 로드 ---
 @st.cache_resource
 def load_ransomware_model():
@@ -458,6 +687,83 @@ def _wait_until_download_complete(path: Path, timeout: float = 10.0):
         except FileNotFoundError:
             time.sleep(0.5)
     return False
+
+def _process_single_file(file_path: Path, task_lock: threading.Lock) -> dict:
+    """
+    단일 파일을 처리하는 Worker 함수 (병렬 처리용)
+
+    Args:
+        file_path: 처리할 파일 경로
+        task_lock: 세션 상태 업데이트용 락
+
+    Returns:
+        dict: 처리 결과 {'success': bool, 'file_name': str, 'result': dict, 'error': str}
+    """
+    try:
+        file_name = file_path.name
+
+        # 작업 시작 - 세션 상태에 등록 (Thread-safe)
+        with task_lock:
+            st.session_state.processing_tasks[file_name] = {
+                'status': '파일 검증 중',
+                'start_time': datetime.now()
+            }
+
+        # 파일 안정화 대기
+        if not _wait_until_download_complete(file_path):
+            with task_lock:
+                st.session_state.processing_tasks[file_name]['status'] = '오류'
+            return {
+                'success': False,
+                'file_name': file_name,
+                'error': '파일이 안정화되지 않음'
+            }
+
+        # 특징 추출
+        with task_lock:
+            st.session_state.processing_tasks[file_name]['status'] = '특징 추출 중'
+        features = extract_pe_header_features(file_path)
+
+        # AI 분석
+        with task_lock:
+            st.session_state.processing_tasks[file_name]['status'] = 'AI 분석 중'
+        result = ransomware_model.predict_with_explanation(features)
+
+        # 보고서 작성
+        with task_lock:
+            st.session_state.processing_tasks[file_name]['status'] = '보고서 작성 중'
+        handle_action(file_path=file_path, model_result=result)
+
+        # AI 브리핑
+        with task_lock:
+            st.session_state.processing_tasks[file_name]['status'] = 'AI 브리핑 중'
+
+        analysis_payload = {"file_name": file_name, "result": result}
+        summary = get_ai_summary(analysis_payload)
+
+        # 완료
+        with task_lock:
+            st.session_state.processing_tasks[file_name]['status'] = '완료'
+
+        return {
+            'success': True,
+            'file_name': file_name,
+            'result': result,
+            'summary': summary,
+            'analysis_payload': analysis_payload
+        }
+
+    except Exception as e:
+        with task_lock:
+            if file_name in st.session_state.processing_tasks:
+                st.session_state.processing_tasks[file_name]['status'] = '오류'
+
+        return {
+            'success': False,
+            'file_name': file_name,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
 
 def generate_detection_story(file_path: Path, model_result: dict, timestamp: datetime) -> str:
     """탐지 로그를 스토리텔링 형식으로 변환"""
@@ -982,43 +1288,75 @@ def render_realtime_soc_dashboard():
         # 실시간 탭에만 있는 추가 기능들
         st.markdown("---")
         
-        # 파일 큐 처리
+        # 파일 큐 처리 (병렬 처리)
         files_processed = False
+        files_to_process = []
+
+        # 큐에서 모든 대기 중인 파일 수집 (최대 10개)
+        MAX_BATCH_SIZE = 10
         try:
-            while True:
+            while len(files_to_process) < MAX_BATCH_SIZE:
                 file_path = file_queue.get_nowait()
-                files_processed = True
-                
+
+                # 분석 대상 확장자 확인
                 if file_path.suffix.lower() not in ANALYSIS_EXTENSIONS:
                     st.toast(f"분석 대상 아님 (무시): {file_path.name}", icon="🤷")
                     continue
-                
-                st.toast(f"'{file_path.name}' 파일 분석 중...", icon="⏱️")
-                
-                if not _wait_until_download_complete(file_path):
-                    st.warning(f"'{file_path.name}' 파일이 안정화되지 않아 분석을 건너뜁니다.")
-                    continue
-                
-                try:
-                    features = extract_pe_header_features(file_path)
-                    result = ransomware_model.predict_with_explanation(features)
-                    
-                    analysis_payload = {"file_name": file_path.name, "result": result}
-                    st.session_state.last_analysis_result = analysis_payload
-                    
-                    handle_action(file_path=file_path, model_result=result)
-                    
-                    st.toast("🤖 AI 애널리스트 브리핑 요청 중...", icon="🧠")
-                    summary = get_ai_summary(analysis_payload)
-                    st.session_state.ai_summary = summary
-                    st.session_state.show_analysis_complete_toast = file_path.name
-                    
-                except Exception as e:
-                    st.error(f"❌ '{file_path.name}' 분석 중 오류 발생:")
-                    st.code(traceback.format_exc())
-        
+
+                files_to_process.append(file_path)
+                files_processed = True
+
         except queue.Empty:
             pass
+
+        # 파일이 있으면 병렬 처리 시작
+        if files_to_process:
+            # Thread-safe 락 생성
+            task_lock = threading.Lock()
+
+            # 병렬 처리 시작 알림
+            if len(files_to_process) == 1:
+                st.toast(f"'{files_to_process[0].name}' 파일 분석 시작...", icon="⏱️")
+            else:
+                st.toast(f"{len(files_to_process)}개 파일 병렬 분석 시작...", icon="⏱️")
+
+            # ThreadPoolExecutor로 병렬 처리
+            with ThreadPoolExecutor(max_workers=min(5, len(files_to_process))) as executor:
+                # 모든 파일을 병렬로 처리
+                future_to_file = {
+                    executor.submit(_process_single_file, file_path, task_lock): file_path
+                    for file_path in files_to_process
+                }
+
+                # 완료된 작업 처리
+                for future in as_completed(future_to_file):
+                    file_path = future_to_file[future]
+                    try:
+                        result_dict = future.result()
+
+                        if result_dict['success']:
+                            # 성공 시 세션 상태 업데이트
+                            st.session_state.last_analysis_result = result_dict['analysis_payload']
+                            st.session_state.ai_summary = result_dict['summary']
+                            st.session_state.show_analysis_complete_toast = result_dict['file_name']
+
+                            st.toast(f"🤖 '{result_dict['file_name']}' AI 브리핑 완료", icon="🧠")
+
+                            # 3초 후 완료된 작업 제거
+                            time.sleep(3)
+                            with task_lock:
+                                if result_dict['file_name'] in st.session_state.processing_tasks:
+                                    del st.session_state.processing_tasks[result_dict['file_name']]
+                        else:
+                            # 실패 시 경고 표시
+                            if 'error' in result_dict:
+                                st.warning(f"⚠️ '{result_dict['file_name']}' 분석 실패: {result_dict['error']}")
+                            if 'traceback' in result_dict:
+                                st.code(result_dict['traceback'])
+
+                    except Exception as e:
+                        st.error(f"❌ '{file_path.name}' 처리 중 예외 발생:")
+                        st.code(traceback.format_exc())
         
         # 토스트 알림 표시
         if st.session_state.get("show_analysis_complete_toast"):
@@ -1151,47 +1489,539 @@ def render_realtime_soc_dashboard():
     
     # --- 탭 2: 일간 ---
     with period_tab2:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("### 📅 일간 이상 파일 탐지 대시보드")
+        st.markdown("## 📅 일간 보안 관제 리포트")
+
+        col1, col2 = st.columns([4, 1])
         with col2:
-            selected_date = st.date_input("날짜 선택", value=datetime.now().date(), key="daily_date")
-        
+            selected_date = st.date_input("📆 날짜 선택", value=datetime.now().date(), key="daily_date")
+
         df_daily = filter_by_period(df_all, 'daily', selected_date)
-        render_period_dashboard(df_daily, f"일간 ({selected_date})")
+
+        st.markdown("---")
+
+        if not df_daily.empty:
+            metrics = calculate_dashboard_metrics(df_daily)
+
+            # 1. 핵심 지표 (KPI)
+            st.markdown("### 📊 주요 지표 (Key Performance Indicators)")
+            kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+
+            with kpi1:
+                st.metric("총 탐지", f"{metrics['total_events']}건",
+                         help="오늘 분석한 전체 파일 수")
+            with kpi2:
+                st.metric("위협 탐지", f"{metrics['ransomware_count']}건",
+                         delta=f"{metrics['ransomware_ratio']:.1%}",
+                         delta_color="inverse",
+                         help="랜섬웨어로 탐지된 파일 수")
+            with kpi3:
+                st.metric("정상 파일", f"{metrics['benign_count']}건",
+                         delta=f"{(1-metrics['ransomware_ratio']):.1%}" if metrics['ransomware_ratio'] < 1 else None,
+                         help="정상으로 판정된 파일 수")
+            with kpi4:
+                avg_prob = metrics['avg_probability']
+                threat_level = "🔴 높음" if avg_prob >= 0.7 else "🟠 중간" if avg_prob >= 0.4 else "🟢 낮음"
+                st.metric("평균 위험도", f"{avg_prob:.1%}",
+                         delta=threat_level,
+                         help="탐지된 파일들의 평균 위험 확률")
+            with kpi5:
+                high_risk = len(df_daily[df_daily['probability'] >= 0.8])
+                st.metric("고위험 파일", f"{high_risk}건",
+                         delta="즉시 대응 필요" if high_risk > 0 else "없음",
+                         delta_color="inverse" if high_risk > 0 else "normal",
+                         help="위험도 80% 이상 파일")
+
+            st.markdown("---")
+
+            # 2. 시각화 차트
+            st.markdown("### 📈 위협 분석 차트")
+            chart_col1, chart_col2 = st.columns(2)
+
+            with chart_col1:
+                # 시간대별 탐지 추이
+                timeline_chart = create_timeline_chart(df_daily)
+                if timeline_chart:
+                    st.plotly_chart(timeline_chart, use_container_width=True, key="daily_timeline")
+                else:
+                    st.info("시간대별 데이터가 부족합니다")
+
+            with chart_col2:
+                # 위험도 분포
+                prob_chart = create_probability_distribution_chart(df_daily)
+                if prob_chart:
+                    st.plotly_chart(prob_chart, use_container_width=True, key="daily_prob")
+                else:
+                    st.info("확률 분포 데이터가 부족합니다")
+
+            # 위험도 게이지
+            if avg_prob > 0:
+                gauge_chart = create_risk_gauge_chart(avg_prob)
+                st.plotly_chart(gauge_chart, use_container_width=True, key="daily_gauge")
+
+            st.markdown("---")
+
+            # 추가 시각화 차트
+            st.markdown("### 📊 상세 분석 차트")
+            viz_col1, viz_col2 = st.columns(2)
+
+            with viz_col1:
+                # 탐지 유형 파이 차트
+                pie_chart = create_threat_type_pie(df_daily)
+                if pie_chart:
+                    st.plotly_chart(pie_chart, use_container_width=True, key="daily_pie")
+                else:
+                    st.info("분류 데이터가 부족합니다")
+
+            with viz_col2:
+                # 위험도별 퍼널 차트
+                funnel_chart = create_risk_level_funnel(df_daily)
+                if funnel_chart:
+                    st.plotly_chart(funnel_chart, use_container_width=True, key="daily_funnel")
+                else:
+                    st.info("위협 데이터가 없습니다")
+
+            # 누적 위협 차트
+            cumulative_chart = create_cumulative_threat_chart(df_daily)
+            if cumulative_chart:
+                st.plotly_chart(cumulative_chart, use_container_width=True, key="daily_cumulative")
+
+            # 시간대별 히트맵 (데이터가 여러 날인 경우)
+            if len(df_daily['timestamp'].dt.date.unique()) > 1:
+                heatmap_chart = create_hourly_heatmap(df_daily)
+                if heatmap_chart:
+                    st.plotly_chart(heatmap_chart, use_container_width=True, key="daily_heatmap")
+
+            st.markdown("---")
+
+            # 3. 위협 파일 상세 목록
+            ransomware_df = df_daily[df_daily['label'] == 1]
+            if not ransomware_df.empty:
+                st.markdown(f"### 🚨 탐지된 위협 파일 ({len(ransomware_df)}건)")
+
+                # 우선순위별 분류
+                critical = ransomware_df[ransomware_df['probability'] >= 0.8]
+                high = ransomware_df[(ransomware_df['probability'] >= 0.6) & (ransomware_df['probability'] < 0.8)]
+                medium = ransomware_df[ransomware_df['probability'] < 0.6]
+
+                priority_col1, priority_col2, priority_col3 = st.columns(3)
+                with priority_col1:
+                    st.metric("🔴 긴급 (80%+)", f"{len(critical)}건")
+                with priority_col2:
+                    st.metric("🟠 높음 (60-80%)", f"{len(high)}건")
+                with priority_col3:
+                    st.metric("🟡 중간 (60% 미만)", f"{len(medium)}건")
+
+                st.markdown("#### 상세 탐지 목록")
+
+                # 위험도 높은 순으로 정렬
+                for idx, row in ransomware_df.sort_values('probability', ascending=False).iterrows():
+                    risk_emoji = "🔴" if row['probability'] >= 0.8 else "🟠" if row['probability'] >= 0.6 else "🟡"
+
+                    with st.expander(
+                        f"{risk_emoji} **{row['file_name']}** - 위험도: {row['probability']:.1%} | {row['timestamp'].strftime('%H:%M:%S')}"
+                    ):
+                        detail_col1, detail_col2 = st.columns([1, 1])
+
+                        with detail_col1:
+                            st.markdown("**📋 기본 정보**")
+                            st.write(f"• 파일명: `{row['file_name']}`")
+                            st.write(f"• 탐지 시각: {row['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}")
+                            st.write(f"• 위험도: {row['probability']:.2%}")
+
+                            if 'anomalies' in row and row['anomalies']:
+                                st.markdown("**🎯 주요 이상 패턴 (Top 3)**")
+                                for i, anom in enumerate(row['anomalies'][:3], 1):
+                                    st.write(f"{i}. {anom.get('description', 'N/A')} (Z-score: {anom.get('z_score', 0):.1f})")
+
+                        with detail_col2:
+                            # 탐지 스토리
+                            if 'detection_story' in row and row['detection_story']:
+                                st.markdown("**📖 탐지 스토리**")
+                                story_preview = row['detection_story'][:200] + "..." if len(row['detection_story']) > 200 else row['detection_story']
+                                st.info(story_preview)
+
+                            # 비즈니스 임팩트 요약
+                            if 'business_impact' in row and isinstance(row['business_impact'], dict):
+                                impact = row['business_impact']
+                                total_loss = impact.get('total_estimated_loss', 0)
+                                if total_loss > 0:
+                                    st.markdown("**💰 예상 피해액**")
+                                    st.error(f"₩{total_loss:,.0f}")
+
+                # 요약 테이블
+                st.markdown("#### 📋 요약 테이블")
+                summary_df = ransomware_df[['timestamp', 'file_name', 'probability']].copy()
+                summary_df['timestamp'] = summary_df['timestamp'].dt.strftime('%H:%M:%S')
+                summary_df['probability'] = summary_df['probability'].apply(lambda x: f"{x:.1%}")
+                summary_df.columns = ['탐지 시각', '파일명', '위험도']
+                st.dataframe(summary_df, use_container_width=True, key="daily_summary")
+
+            else:
+                st.success("✅ 오늘 탐지된 위협이 없습니다. 안전한 하루입니다!")
+
+        else:
+            st.info(f"📭 {selected_date} 데이터가 없습니다. 다른 날짜를 선택하세요.")
     
     # --- 탭 3: 주간 ---
     with period_tab3:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("### 📆 주간 이상 파일 탐지 대시보드")
+        st.markdown("## 📆 주간 보안 관제 리포트")
+
+        col1, col2 = st.columns([4, 1])
         with col2:
             today = datetime.now()
             week_num = today.isocalendar()[1]
-            selected_week = st.number_input("주차 선택", min_value=1, max_value=53, value=week_num, key="weekly_week")
-        
+            selected_week = st.number_input("📅 주차 선택", min_value=1, max_value=53, value=week_num, key="weekly_week")
+
         # 선택된 주의 시작 날짜 계산
         target_date = datetime.strptime(f'{today.year}-W{int(selected_week)}-1', "%Y-W%W-%w")
         df_weekly = filter_by_period(df_all, 'weekly', target_date)
-        render_period_dashboard(df_weekly, f"주간 ({today.year}년 {int(selected_week)}주차)")
+
+        st.markdown("---")
+
+        if not df_weekly.empty:
+            metrics = calculate_dashboard_metrics(df_weekly)
+
+            # 1. 주간 핵심 지표
+            st.markdown(f"### 📊 {today.year}년 {int(selected_week)}주차 주요 지표")
+            kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+
+            with kpi1:
+                st.metric("주간 총 탐지", f"{metrics['total_events']}건",
+                         help="이번 주 분석한 전체 파일 수")
+            with kpi2:
+                st.metric("주간 위협 탐지", f"{metrics['ransomware_count']}건",
+                         delta=f"{metrics['ransomware_ratio']:.1%}",
+                         delta_color="inverse")
+            with kpi3:
+                st.metric("일평균 탐지", f"{metrics['total_events']/7:.1f}건",
+                         help="주간 탐지 건수의 일평균")
+            with kpi4:
+                avg_prob = metrics['avg_probability']
+                threat_trend = "상승 🔺" if avg_prob > 0.5 else "안정 ➡️" if avg_prob > 0.3 else "하락 🔻"
+                st.metric("주간 평균 위험도", f"{avg_prob:.1%}",
+                         delta=threat_trend)
+
+            st.markdown("---")
+
+            # 2. 주간 트렌드 분석
+            st.markdown("### 📈 주간 위협 트렌드")
+
+            trend_col1, trend_col2 = st.columns(2)
+
+            with trend_col1:
+                # 일별 탐지 추이
+                timeline_chart = create_timeline_chart(df_weekly)
+                if timeline_chart:
+                    st.plotly_chart(timeline_chart, use_container_width=True, key="weekly_timeline")
+
+            with trend_col2:
+                # 위험도 분포
+                prob_chart = create_probability_distribution_chart(df_weekly)
+                if prob_chart:
+                    st.plotly_chart(prob_chart, use_container_width=True, key="weekly_prob")
+
+            st.markdown("---")
+
+            # 추가 시각화 차트
+            st.markdown("### 📊 주간 상세 분석")
+            week_viz_col1, week_viz_col2 = st.columns(2)
+
+            with week_viz_col1:
+                # 요일별 바 차트
+                weekday_bar = create_weekday_bar_chart(df_weekly)
+                if weekday_bar:
+                    st.plotly_chart(weekday_bar, use_container_width=True, key="weekly_weekday_bar")
+
+            with week_viz_col2:
+                # 누적 위협 차트
+                cumulative_chart = create_cumulative_threat_chart(df_weekly)
+                if cumulative_chart:
+                    st.plotly_chart(cumulative_chart, use_container_width=True, key="weekly_cumulative")
+
+            # 탐지 유형 파이 차트와 위험도 퍼널
+            week_viz_col3, week_viz_col4 = st.columns(2)
+
+            with week_viz_col3:
+                pie_chart = create_threat_type_pie(df_weekly)
+                if pie_chart:
+                    st.plotly_chart(pie_chart, use_container_width=True, key="weekly_pie")
+
+            with week_viz_col4:
+                funnel_chart = create_risk_level_funnel(df_weekly)
+                if funnel_chart:
+                    st.plotly_chart(funnel_chart, use_container_width=True, key="weekly_funnel")
+
+            st.markdown("---")
+
+            # 3. 요일별 통계
+            st.markdown("### 📅 요일별 탐지 현황")
+            df_weekly['weekday'] = df_weekly['timestamp'].dt.day_name()
+            weekday_stats = df_weekly.groupby(['weekday', 'label']).size().unstack(fill_value=0)
+
+            weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            weekday_kr = {'Monday': '월', 'Tuesday': '화', 'Wednesday': '수', 'Thursday': '목',
+                         'Friday': '금', 'Saturday': '토', 'Sunday': '일'}
+
+            day_cols = st.columns(7)
+            for i, day in enumerate(weekday_order):
+                if day in weekday_stats.index:
+                    total = weekday_stats.loc[day].sum()
+                    ransomware = weekday_stats.loc[day].get(1, 0) if 1 in weekday_stats.columns else 0
+                    with day_cols[i]:
+                        st.metric(weekday_kr[day], f"{int(total)}건",
+                                 delta=f"위협 {int(ransomware)}건" if ransomware > 0 else "안전",
+                                 delta_color="inverse" if ransomware > 0 else "normal")
+
+            st.markdown("---")
+
+            # 4. 주요 위협 목록 (Top 10)
+            ransomware_df = df_weekly[df_weekly['label'] == 1]
+            if not ransomware_df.empty:
+                st.markdown(f"### 🚨 주간 주요 위협 (상위 10건)")
+
+                top_threats = ransomware_df.sort_values('probability', ascending=False).head(10)
+
+                for idx, row in top_threats.iterrows():
+                    risk_emoji = "🔴" if row['probability'] >= 0.8 else "🟠" if row['probability'] >= 0.6 else "🟡"
+                    weekday_kr_short = weekday_kr[row['timestamp'].day_name()]
+
+                    col_file, col_time, col_risk = st.columns([3, 1, 1])
+                    with col_file:
+                        st.write(f"{risk_emoji} **{row['file_name']}**")
+                    with col_time:
+                        st.write(f"{row['timestamp'].strftime('%m/%d')} ({weekday_kr_short})")
+                    with col_risk:
+                        st.write(f"{row['probability']:.1%}")
+
+                st.markdown("---")
+
+                # 요약 통계
+                summary_col1, summary_col2, summary_col3 = st.columns(3)
+                with summary_col1:
+                    critical_count = len(ransomware_df[ransomware_df['probability'] >= 0.8])
+                    st.metric("긴급 대응 필요", f"{critical_count}건")
+                with summary_col2:
+                    high_count = len(ransomware_df[(ransomware_df['probability'] >= 0.6) & (ransomware_df['probability'] < 0.8)])
+                    st.metric("높음 위험", f"{high_count}건")
+                with summary_col3:
+                    total_impact = 0
+                    for _, row in ransomware_df.iterrows():
+                        if 'business_impact' in row and isinstance(row['business_impact'], dict):
+                            total_impact += row['business_impact'].get('total_estimated_loss', 0)
+                    if total_impact > 0:
+                        st.metric("주간 예상 피해액", f"₩{total_impact:,.0f}")
+
+            else:
+                st.success("✅ 이번 주는 탐지된 위협이 없습니다. 안전한 한 주입니다!")
+
+        else:
+            st.info(f"📭 {today.year}년 {int(selected_week)}주차 데이터가 없습니다.")
     
     # --- 탭 4: 월간 ---
     with period_tab4:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("### 📈 월간 이상 파일 탐지 대시보드")
+        st.markdown("## 📈 월간 보안 관제 리포트")
+
+        col1, col2 = st.columns([4, 1])
         with col2:
             selected_month = st.selectbox(
-                "월 선택",
+                "📅 월 선택",
                 options=list(range(1, 13)),
                 index=datetime.now().month - 1,
                 format_func=lambda x: f"{x}월",
                 key="monthly_month"
             )
-        
+
         target_date = datetime(datetime.now().year, selected_month, 1)
         df_monthly = filter_by_period(df_all, 'monthly', target_date)
-        render_period_dashboard(df_monthly, f"월간 ({datetime.now().year}년 {selected_month}월)")
+
+        st.markdown("---")
+
+        if not df_monthly.empty:
+            metrics = calculate_dashboard_metrics(df_monthly)
+
+            # 1. 월간 핵심 지표
+            st.markdown(f"### 📊 {datetime.now().year}년 {selected_month}월 주요 지표")
+            kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+
+            with kpi1:
+                st.metric("월간 총 탐지", f"{metrics['total_events']}건")
+            with kpi2:
+                st.metric("월간 위협 탐지", f"{metrics['ransomware_count']}건",
+                         delta=f"{metrics['ransomware_ratio']:.1%}",
+                         delta_color="inverse")
+            with kpi3:
+                days_in_month = (target_date.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+                st.metric("일평균 탐지", f"{metrics['total_events']/days_in_month.day:.1f}건")
+            with kpi4:
+                st.metric("주평균 탐지", f"{metrics['total_events']/4:.1f}건",
+                         help="월간 탐지 건수의 주평균 (4주 기준)")
+            with kpi5:
+                avg_prob = metrics['avg_probability']
+                st.metric("월간 평균 위험도", f"{avg_prob:.1%}")
+
+            st.markdown("---")
+
+            # 2. 월간 트렌드
+            st.markdown("### 📈 월간 위협 트렌드 분석")
+
+            trend_col1, trend_col2 = st.columns(2)
+
+            with trend_col1:
+                timeline_chart = create_timeline_chart(df_monthly)
+                if timeline_chart:
+                    st.plotly_chart(timeline_chart, use_container_width=True, key="monthly_timeline")
+
+            with trend_col2:
+                prob_chart = create_probability_distribution_chart(df_monthly)
+                if prob_chart:
+                    st.plotly_chart(prob_chart, use_container_width=True, key="monthly_prob")
+
+            st.markdown("---")
+
+            # 추가 시각화 차트
+            st.markdown("### 📊 월간 상세 분석")
+            month_viz_col1, month_viz_col2 = st.columns(2)
+
+            with month_viz_col1:
+                # 누적 위협 차트
+                cumulative_chart = create_cumulative_threat_chart(df_monthly)
+                if cumulative_chart:
+                    st.plotly_chart(cumulative_chart, use_container_width=True, key="monthly_cumulative")
+
+            with month_viz_col2:
+                # 시간대별 히트맵
+                heatmap_chart = create_hourly_heatmap(df_monthly)
+                if heatmap_chart:
+                    st.plotly_chart(heatmap_chart, use_container_width=True, key="monthly_heatmap")
+
+            # 탐지 유형 및 위험도 분석
+            month_viz_col3, month_viz_col4 = st.columns(2)
+
+            with month_viz_col3:
+                pie_chart = create_threat_type_pie(df_monthly)
+                if pie_chart:
+                    st.plotly_chart(pie_chart, use_container_width=True, key="monthly_pie")
+
+            with month_viz_col4:
+                funnel_chart = create_risk_level_funnel(df_monthly)
+                if funnel_chart:
+                    st.plotly_chart(funnel_chart, use_container_width=True, key="monthly_funnel")
+
+            # 요일별 바 차트
+            weekday_bar = create_weekday_bar_chart(df_monthly)
+            if weekday_bar:
+                st.plotly_chart(weekday_bar, use_container_width=True, key="monthly_weekday_bar")
+
+            st.markdown("---")
+
+            # 3. 주차별 통계
+            st.markdown("### 📅 주차별 탐지 현황")
+            df_monthly['week'] = df_monthly['timestamp'].dt.isocalendar().week
+            weekly_stats = df_monthly.groupby(['week', 'label']).size().unstack(fill_value=0)
+
+            week_cols = st.columns(min(len(weekly_stats), 5))
+            for i, (week, row) in enumerate(weekly_stats.iterrows()):
+                if i < 5:  # 최대 5주만 표시
+                    total = row.sum()
+                    ransomware = row.get(1, 0) if 1 in weekly_stats.columns else 0
+                    with week_cols[i]:
+                        st.metric(f"{int(week)}주차", f"{int(total)}건",
+                                 delta=f"위협 {int(ransomware)}건" if ransomware > 0 else "안전",
+                                 delta_color="inverse" if ransomware > 0 else "normal")
+
+            st.markdown("---")
+
+            # 4. 위협 유형 분석
+            ransomware_df = df_monthly[df_monthly['label'] == 1]
+            if not ransomware_df.empty:
+                st.markdown("### 🚨 월간 위협 분석")
+
+                analysis_col1, analysis_col2 = st.columns(2)
+
+                with analysis_col1:
+                    st.markdown("#### 위험도별 분포")
+                    critical = len(ransomware_df[ransomware_df['probability'] >= 0.8])
+                    high = len(ransomware_df[(ransomware_df['probability'] >= 0.6) & (ransomware_df['probability'] < 0.8)])
+                    medium = len(ransomware_df[(ransomware_df['probability'] >= 0.4) & (ransomware_df['probability'] < 0.6)])
+                    low = len(ransomware_df[ransomware_df['probability'] < 0.4])
+
+                    risk_dist_col1, risk_dist_col2 = st.columns(2)
+                    with risk_dist_col1:
+                        st.metric("🔴 긴급 (80%+)", f"{critical}건")
+                        st.metric("🟠 높음 (60-80%)", f"{high}건")
+                    with risk_dist_col2:
+                        st.metric("🟡 중간 (40-60%)", f"{medium}건")
+                        st.metric("🟢 낮음 (40% 미만)", f"{low}건")
+
+                with analysis_col2:
+                    st.markdown("#### 비즈니스 임팩트 분석")
+
+                    # 총 예상 피해액 계산
+                    total_impact = 0
+                    total_direct = 0
+                    total_indirect = 0
+
+                    for _, row in ransomware_df.iterrows():
+                        if 'business_impact' in row and isinstance(row['business_impact'], dict):
+                            impact = row['business_impact']
+                            total_impact += impact.get('total_estimated_loss', 0)
+                            direct_damage = impact.get('direct_damage', {})
+                            indirect_damage = impact.get('indirect_damage', {})
+                            if isinstance(direct_damage, dict):
+                                total_direct += direct_damage.get('total', 0)
+                            if isinstance(indirect_damage, dict):
+                                total_indirect += indirect_damage.get('total', 0)
+
+                    st.metric("월간 예상 피해액", f"₩{total_impact:,.0f}")
+                    st.metric("직접 피해", f"₩{total_direct:,.0f}")
+                    st.metric("간접 피해", f"₩{total_indirect:,.0f}")
+
+                st.markdown("---")
+
+                # 5. 월간 주요 위협 Top 15
+                st.markdown("### 📊 월간 주요 위협 목록 (Top 15)")
+
+                top_threats = ransomware_df.sort_values('probability', ascending=False).head(15)
+
+                # 테이블 형식으로 표시
+                threat_table = []
+                for idx, row in top_threats.iterrows():
+                    risk_emoji = "🔴" if row['probability'] >= 0.8 else "🟠" if row['probability'] >= 0.6 else "🟡"
+                    threat_table.append({
+                        '순위': len(threat_table) + 1,
+                        '위험도': risk_emoji,
+                        '파일명': row['file_name'],
+                        '탐지일': row['timestamp'].strftime('%m/%d'),
+                        '확률': f"{row['probability']:.1%}"
+                    })
+
+                threat_df = pd.DataFrame(threat_table)
+                st.dataframe(threat_df, use_container_width=True, hide_index=True, key="monthly_threats")
+
+                st.markdown("---")
+
+                # 6. 월간 요약
+                st.markdown("### 📝 월간 보안 요약")
+
+                summary_col1, summary_col2, summary_col3, summary_col4 = st.columns(4)
+
+                with summary_col1:
+                    st.metric("총 위협 건수", f"{len(ransomware_df)}건")
+                with summary_col2:
+                    detection_rate = (metrics['ransomware_count'] / metrics['total_events'] * 100) if metrics['total_events'] > 0 else 0
+                    st.metric("탐지율", f"{detection_rate:.2f}%")
+                with summary_col3:
+                    avg_daily_threats = len(ransomware_df) / days_in_month.day
+                    st.metric("일평균 위협", f"{avg_daily_threats:.1f}건")
+                with summary_col4:
+                    if total_impact > 0:
+                        st.metric("차단 효과", f"₩{total_impact:,.0f}")
+
+            else:
+                st.success(f"✅ {selected_month}월은 탐지된 위협이 없습니다. 안전한 한 달입니다!")
+
+        else:
+            st.info(f"📭 {datetime.now().year}년 {selected_month}월 데이터가 없습니다.")
 
 
 # --- 10. 사고 관리 시스템 ---
@@ -2527,6 +3357,10 @@ ransomware_model = load_ransomware_model()
 if "page" not in st.session_state:
     st.session_state.page = "실시간 보안 관제"
 
+# 작업 상태 추적을 위한 세션 상태 초기화
+if "processing_tasks" not in st.session_state:
+    st.session_state.processing_tasks = {}  # {파일명: {'status': '분석중', 'progress': 0, 'start_time': datetime}}
+
 with st.sidebar:
     st.title("🛡️ V4 통합 보안 대시보드")
     st.markdown("---")
@@ -2551,6 +3385,55 @@ with st.sidebar:
         st.success("**랜섬웨어 분석 엔진:** ✅ 준비 완료")
     else:
         st.error("**랜섬웨어 분석 엔진:** ❌ 로드 실패")
+
+    # 실시간 작업 상태 표시
+    st.markdown("---")
+    st.markdown("### 🔄 실시간 작업 현황")
+
+    if st.session_state.processing_tasks:
+        # 진행 중인 작업이 있을 때
+        for file_name, task_info in st.session_state.processing_tasks.items():
+            status = task_info.get('status', '대기중')
+            elapsed = (datetime.now() - task_info.get('start_time', datetime.now())).seconds
+
+            # 상태별 이모지
+            status_emoji = {
+                '파일 검증 중': '🔍',
+                '특징 추출 중': '⚙️',
+                'AI 분석 중': '🧠',
+                '보고서 작성 중': '📝',
+                'AI 브리핑 중': '🤖',
+                '완료': '✅',
+                '오류': '❌'
+            }
+
+            emoji = status_emoji.get(status, '🔄')
+
+            # 작업 상태 표시
+            with st.container():
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"{emoji} **{file_name}**")
+                    st.caption(f"{status}")
+                with col2:
+                    st.caption(f"{elapsed}초")
+
+                # 진행률 바
+                progress_map = {
+                    '파일 검증 중': 0.2,
+                    '특징 추출 중': 0.4,
+                    'AI 분석 중': 0.6,
+                    '보고서 작성 중': 0.8,
+                    'AI 브리핑 중': 0.9,
+                    '완료': 1.0
+                }
+                progress = progress_map.get(status, 0.0)
+                st.progress(progress)
+
+                st.markdown("---")
+    else:
+        # 작업이 없을 때
+        st.info("현재 진행 중인 작업이 없습니다.")
     st.markdown("---")
 
 # 페이지 렌더링

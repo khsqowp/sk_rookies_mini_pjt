@@ -126,6 +126,56 @@ def start_watcher_service():
 def render_realtime_soc_dashboard():
     """페이지 1: 실시간 보안 관제 대시보드 (통합 Watcher)"""
     st.header("📡 실시간 보안 관제")
+
+    # --- 0. 통계 대시보드 (일간/주간/월간) ---
+    log_file_path = LOGS_DIR / "events.jsonl"
+    if log_file_path.exists() and log_file_path.stat().st_size > 0:
+        try:
+            # 로그 데이터 로드
+            log_lines = log_file_path.read_text(encoding="utf-8").strip().split('\n')
+            log_rows = [json.loads(line) for line in log_lines]
+            df = pd.DataFrame(log_rows)
+            
+            # 타임스탬프 변환 (ISO 포맷 처리)
+            df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
+            df = df.dropna(subset=['timestamp']) # 변환 실패 제거
+            df = df.sort_values('timestamp', ascending=False) # 최신순 정렬
+            
+            # 현재 시간 기준 (UTC/KST 고려)
+            if not df.empty:
+                latest_ts = df['timestamp'].iloc[0]
+                now = pd.Timestamp.now(tz=latest_ts.tz) if latest_ts.tzinfo else pd.Timestamp.now()
+            else:
+                now = pd.Timestamp.now()
+            
+            # 기간별 필터링
+            today_mask = df['timestamp'].dt.date == now.date()
+            week_mask = df['timestamp'] >= (now - pd.Timedelta(days=7))
+            month_mask = df['timestamp'] >= (now - pd.Timedelta(days=30))
+            
+            today_count = len(df[today_mask])
+            week_count = len(df[week_mask])
+            month_count = len(df[month_mask])
+            total_count = len(df)
+            
+            # 통계 표시
+            st.subheader("📊 탐지 현황")
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("오늘 탐지", f"{today_count}건")
+            c2.metric("이번 주 탐지", f"{week_count}건")
+            c3.metric("이번 달 탐지", f"{month_count}건")
+            c4.metric("총 누적 탐지", f"{total_count}건")
+            
+            # 차트 표시 (일별 탐지 추세)
+            if not df.empty:
+                st.caption("최근 30일 탐지 추세")
+                daily_counts = df[month_mask].set_index('timestamp').resample('D').size()
+                st.bar_chart(daily_counts)
+            
+        except Exception as e:
+            st.error(f"통계 로드 중 오류: {e}")
+            st.code(traceback.format_exc())
+    
     st.markdown("---")
 
     # 세션 상태 초기화
@@ -160,52 +210,49 @@ def render_realtime_soc_dashboard():
             files_processed = True
             
             if file_path.suffix.lower() not in ANALYSIS_EXTENSIONS:
-                st.toast(f"분석 대상 아님 (무시): {file_path.name}", icon="🤷")
+                # st.toast(f"분석 대상 아님 (무시): {file_path.name}", icon="🤷")
                 continue
 
-            with st.container():
-                st.info(f"'{file_path.name}' 파일 분석 중...")
-                progress_text = st.empty()
-                progress_bar = st.progress(0)
-
+            # 실시간 작업 현황 (Spinner & Status)
+            # 중요: st.status는 컨테이너 내부에서 렌더링되어야 함
+            status_container = st.empty()
+            with status_container.status(f"🔄 **분석 진행 중:** {file_path.name}", expanded=True) as status:
+                st.write("🔍 1. 파일 안정화 대기 중...")
                 if not _wait_until_download_complete(file_path):
-                    st.warning(f"'{file_path.name}' 파일이 안정화되지 않아 분석을 건너뜁니다.")
-                    progress_bar.empty()
-                    progress_text.empty()
+                    status.update(label=f"⚠️ 분석 건너뜀: {file_path.name} (파일 불안정)", state="error")
+                    time.sleep(2)
+                    status_container.empty()
                     continue
                 
                 try:
-                    progress_text.text("1/3: 피처 추출 중...")
+                    st.write("🧬 2. PE 헤더 피처 추출 중...")
                     features = extract_pe_header_features(file_path)
-                    progress_bar.progress(33)
-
-                    progress_text.text("2/3: 모델 예측 중...")
+                    
+                    st.write("🤖 3. AI 모델 예측 중...")
                     result = ransomware_model.predict_with_explanation(features)
-                    progress_bar.progress(66)
                     
                     st.session_state.last_analysis_result = {
                         "file_name": file_path.name,
                         "result": result
                     }
                     
-                    progress_text.text("3/3: 로그 기록 중...")
+                    st.write("💾 4. 로그 및 결과 저장 중...")
                     handle_action(
                         file_path=file_path,
                         model_result=result
                     )
-                    progress_bar.progress(100)
                     
-                    # 완료 후 정리
-                    progress_bar.empty()
-                    progress_text.empty()
-                    st.success(f"✅ '{file_path.name}' 분석 완료!")
-                    time.sleep(1) # 메시지 확인 시간
+                    label_text = "랜섬웨어" if result['label'] == 1 else "정상 파일"
+                    status.update(label=f"✅ 분석 완료: {file_path.name} ({label_text})", state="complete")
+                    time.sleep(2) # 결과 확인 시간
+                    status_container.empty() # 상태창 닫기
 
                 except Exception as e:
-                    progress_bar.empty()
-                    progress_text.empty()
-                    st.error(f"❌ '{file_path.name}' 분석 중 오류 발생:")
+                    status.update(label=f"❌ 분석 실패: {file_path.name}", state="error")
+                    st.error(f"오류 내용: {e}")
                     st.code(traceback.format_exc())
+                    time.sleep(3)
+                    status_container.empty()
 
     except queue.Empty:
         # 큐가 비었을 때 루프 종료
@@ -236,13 +283,19 @@ def render_realtime_soc_dashboard():
         st.markdown("---")
 
     # 로그 뷰어 표시
-    st.subheader("📂 전체 탐지 로그")
-    log_file_path = LOGS_DIR / "events.jsonl"
+    st.subheader("📂 전체 탐지 로그 (최신순)")
     if log_file_path.exists() and log_file_path.stat().st_size > 0:
         try:
             log_lines = log_file_path.read_text(encoding="utf-8").strip().split('\n')
             log_rows = [json.loads(line) for line in log_lines]
-            log_df = pd.DataFrame(log_rows).sort_values("timestamp", ascending=False)
+            log_df = pd.DataFrame(log_rows)
+            
+            # 타임스탬프 변환 및 정렬 (명시적 처리)
+            if 'timestamp' in log_df.columns:
+                log_df['timestamp'] = pd.to_datetime(log_df['timestamp'], errors='coerce')
+                log_df = log_df.dropna(subset=['timestamp'])
+                log_df = log_df.sort_values("timestamp", ascending=False)
+            
             st.dataframe(log_df, use_container_width=True)
         except (json.JSONDecodeError, FileNotFoundError, ValueError) as e:
             st.warning(f"로그 파일을 읽는 중 오류 발생: {e}")
@@ -254,9 +307,95 @@ def render_realtime_soc_dashboard():
     st.rerun()
 
 def render_incident_response():
-    """페이지 2: 사고 대응"""
+    """페이지 2: 사고 대응 (개선된 버전)"""
     st.header("🚨 사고 대응")
-    st.info("이 페이지는 현재 개발 중입니다.")
+    
+    # 로그 데이터 로드 (사고 후보군)
+    log_file_path = LOGS_DIR / "events.jsonl"
+    if not log_file_path.exists():
+        st.info("데이터가 없습니다.")
+        return
+
+    try:
+        log_lines = log_file_path.read_text(encoding="utf-8").strip().split('\n')
+        log_rows = [json.loads(line) for line in log_lines]
+        df = pd.DataFrame(log_rows)
+        
+        # 랜섬웨어(label=1)만 필터링
+        incidents = df[df['label'] == 1].copy()
+        if 'timestamp' in incidents.columns:
+            incidents['timestamp'] = pd.to_datetime(incidents['timestamp'])
+            incidents = incidents.sort_values('timestamp', ascending=False)
+        
+        if incidents.empty:
+            st.success("현재 대응이 필요한 보안 사고가 없습니다.")
+            return
+            
+        # 사고 선택
+        st.subheader("🔥 탐지된 위협 목록")
+        
+        # 표시할 항목 생성
+        incident_options = {
+            f"{row['timestamp']} - {row['file_name']} (확률: {row.get('prob_ransom', 0):.2%})": idx 
+            for idx, row in incidents.iterrows()
+        }
+        
+        selected_option = st.selectbox("분석할 사고를 선택하세요:", list(incident_options.keys()))
+        selected_idx = incident_options[selected_option]
+        incident = incidents.loc[selected_idx]
+        
+        st.markdown("---")
+        
+        # --- 1. 상태 업데이트 (최우선 노출) ---
+        st.subheader("📝 상태 업데이트")
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            current_status = st.radio(
+                "현재 처리 상태",
+                ["대기 (New)", "분석 중 (Analyzing)", "대응 완료 (Resolved)", "오탐 (False Positive)"],
+                horizontal=True,
+                key=f"status_{selected_idx}"
+            )
+        with col2:
+            st.button("상태 저장", type="primary", key=f"save_{selected_idx}")
+            
+        st.markdown("---")
+
+        # --- 2. 사고 타임라인 ---
+        st.subheader("🕰 사고 타임라인")
+        st.info(f"""
+        - **{incident['timestamp']}**: 최초 탐지 (랜섬웨어 의심)
+        - **{incident['timestamp']}**: 자동 분석 완료 (확률: {incident.get('prob_ransom', 0):.2%})
+        - **현재**: {current_status} 단계 진행 중
+        """)
+        
+        st.markdown("---")
+
+        # --- 3. 대응 체크리스트 ---
+        st.subheader("✅ 대응 체크리스트")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**초동 조치**")
+            st.checkbox("네트워크 격리 완료", key=f"chk_net_{selected_idx}")
+            st.checkbox("악성 프로세스 강제 종료", key=f"chk_proc_{selected_idx}")
+            st.checkbox("사용자 계정 잠금", key=f"chk_user_{selected_idx}")
+            
+        with c2:
+            st.markdown("**분석 및 복구**")
+            st.checkbox("감염 경로 파악", key=f"chk_path_{selected_idx}")
+            st.checkbox("백업 데이터 확인", key=f"chk_backup_{selected_idx}")
+            st.checkbox("보안 정책 업데이트", key=f"chk_policy_{selected_idx}")
+
+        st.markdown("---")
+        
+        # --- 4. 상세 정보 (참고용) ---
+        with st.expander("🔍 상세 분석 정보 보기", expanded=False):
+            st.json(incident.to_dict())
+
+    except Exception as e:
+        st.error(f"데이터 로드 중 오류 발생: {e}")
 
 # --- 5. 메인 애플리케이션 로직 ---
 ransomware_model = load_ransomware_model()

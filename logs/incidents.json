@@ -28,6 +28,56 @@
         "timestamp": "2025-11-19T17:15:48.127970",
         "status": "완료",
         "description": "사고 대응 완료"
+      },
+      {
+        "timestamp": "2025-11-20T09:27:55.828963",
+        "status": "분석중",
+        "description": "담당자가 상세 분석 시작"
+      },
+      {
+        "timestamp": "2025-11-20T09:28:03.120625",
+        "status": "격리됨",
+        "description": "악성 파일 격리 완료"
+      },
+      {
+        "timestamp": "2025-11-20T09:28:07.776333",
+        "status": "완료",
+        "description": "사고 대응 완료"
+      },
+      {
+        "timestamp": "2025-11-20T10:06:58.321266",
+        "status": "분석중",
+        "description": "담당자가 상세 분석 시작"
+      },
+      {
+        "timestamp": "2025-11-20T10:07:01.302751",
+        "status": "분석중",
+        "description": "담당자가 상세 분석 시작"
+      },
+      {
+        "timestamp": "2025-11-20T10:07:02.298638",
+        "status": "분석중",
+        "description": "담당자가 상세 분석 시작"
+      },
+      {
+        "timestamp": "2025-11-20T10:07:02.603012",
+        "status": "분석중",
+        "description": "담당자가 상세 분석 시작"
+      },
+      {
+        "timestamp": "2025-11-20T10:07:02.787075",
+        "status": "분석중",
+        "description": "담당자가 상세 분석 시작"
+      },
+      {
+        "timestamp": "2025-11-20T10:07:06.598922",
+        "status": "격리됨",
+        "description": "악성 파일 격리 완료"
+      },
+      {
+        "timestamp": "2025-11-20T10:32:39.120145",
+        "status": "완료",
+        "description": "사고 대응 완료"
       }
     ],
     "checklist": [
@@ -1390,6 +1440,1336 @@
     "timeline": [
       {
         "timestamp": "2025-11-19T17:35:21.589050",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-092906",
+    "created_at": "2025-11-20T09:29:06.919466",
+    "file_name": "enc (8).exe",
+    "file_path": "/Users/user/Downloads/enc (8).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:29:06.919469",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-092906",
+    "created_at": "2025-11-20T09:29:06.919524",
+    "file_name": "enc (8).exe",
+    "file_path": "/Users/user/Downloads/enc (8).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:29:06.919526",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-094628",
+    "created_at": "2025-11-20T09:46:28.198044",
+    "file_name": "enc (9).exe",
+    "file_path": "/Users/user/Downloads/enc (9).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:46:28.198048",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095008",
+    "created_at": "2025-11-20T09:50:08.707505",
+    "file_name": "enc (12).exe",
+    "file_path": "/Users/user/Downloads/enc (12).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:50:08.707507",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095008",
+    "created_at": "2025-11-20T09:50:08.707548",
+    "file_name": "enc (12).exe",
+    "file_path": "/Users/user/Downloads/enc (12).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:50:08.707549",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095008",
+    "created_at": "2025-11-20T09:50:08.707578",
+    "file_name": "enc (11).exe",
+    "file_path": "/Users/user/Downloads/enc (11).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:50:08.707579",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095008",
+    "created_at": "2025-11-20T09:50:08.707604",
+    "file_name": "enc (11).exe",
+    "file_path": "/Users/user/Downloads/enc (11).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:50:08.707605",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095008",
+    "created_at": "2025-11-20T09:50:08.707629",
+    "file_name": "enc (10).exe",
+    "file_path": "/Users/user/Downloads/enc (10).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:50:08.707630",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095008",
+    "created_at": "2025-11-20T09:50:08.707653",
+    "file_name": "enc (10).exe",
+    "file_path": "/Users/user/Downloads/enc (10).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:50:08.707653",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617781",
+    "file_name": "enc (17).exe",
+    "file_path": "/Users/user/Downloads/enc (17).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617785",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617833",
+    "file_name": "enc (16).exe",
+    "file_path": "/Users/user/Downloads/enc (16).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617835",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617868",
+    "file_name": "enc (16).exe",
+    "file_path": "/Users/user/Downloads/enc (16).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617870",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617897",
+    "file_name": "enc (16).exe",
+    "file_path": "/Users/user/Downloads/enc (16).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617898",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617922",
+    "file_name": "enc (15).exe",
+    "file_path": "/Users/user/Downloads/enc (15).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617923",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617946",
+    "file_name": "enc (15).exe",
+    "file_path": "/Users/user/Downloads/enc (15).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617947",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617970",
+    "file_name": "enc (15).exe",
+    "file_path": "/Users/user/Downloads/enc (15).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617970",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.617992",
+    "file_name": "enc (14).exe",
+    "file_path": "/Users/user/Downloads/enc (14).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.617992",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.618014",
+    "file_name": "enc (14).exe",
+    "file_path": "/Users/user/Downloads/enc (14).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.618015",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.618036",
+    "file_name": "enc (14).exe",
+    "file_path": "/Users/user/Downloads/enc (14).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.618036",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.618057",
+    "file_name": "enc (14).exe",
+    "file_path": "/Users/user/Downloads/enc (14).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.618058",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.618078",
+    "file_name": "enc (13).exe",
+    "file_path": "/Users/user/Downloads/enc (13).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.618079",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.618100",
+    "file_name": "enc (13).exe",
+    "file_path": "/Users/user/Downloads/enc (13).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.618101",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-095640",
+    "created_at": "2025-11-20T09:56:40.618121",
+    "file_name": "enc (13).exe",
+    "file_path": "/Users/user/Downloads/enc (13).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T09:56:40.618122",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-100458",
+    "created_at": "2025-11-20T10:04:58.303434",
+    "file_name": "enc (20).exe",
+    "file_path": "/Users/user/Downloads/enc (20).exe",
+    "probability": 0.7433333333333334,
+    "status": "격리됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T10:04:58.303438",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      },
+      {
+        "timestamp": "2025-11-20T10:06:46.133454",
+        "status": "분석중",
+        "description": "담당자가 상세 분석 시작"
+      },
+      {
+        "timestamp": "2025-11-20T10:06:51.800987",
+        "status": "격리됨",
+        "description": "악성 파일 격리 완료"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-100458",
+    "created_at": "2025-11-20T10:04:58.303491",
+    "file_name": "enc (19).exe",
+    "file_path": "/Users/user/Downloads/enc (19).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T10:04:58.303492",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-100458",
+    "created_at": "2025-11-20T10:04:58.303525",
+    "file_name": "enc (19).exe",
+    "file_path": "/Users/user/Downloads/enc (19).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T10:04:58.303526",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-100458",
+    "created_at": "2025-11-20T10:04:58.303554",
+    "file_name": "enc (19).exe",
+    "file_path": "/Users/user/Downloads/enc (19).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T10:04:58.303555",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-100458",
+    "created_at": "2025-11-20T10:04:58.303580",
+    "file_name": "enc (18).exe",
+    "file_path": "/Users/user/Downloads/enc (18).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T10:04:58.303581",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-100458",
+    "created_at": "2025-11-20T10:04:58.303606",
+    "file_name": "enc (18).exe",
+    "file_path": "/Users/user/Downloads/enc (18).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T10:04:58.303607",
+        "status": "탐지됨",
+        "description": "랜섬웨어 탐지 (확률: 74.33%)"
+      }
+    ],
+    "checklist": [
+      {
+        "task": "초기 분석 완료",
+        "completed": false
+      },
+      {
+        "task": "영향 범위 파악",
+        "completed": false
+      },
+      {
+        "task": "파일 격리/삭제",
+        "completed": false
+      },
+      {
+        "task": "시스템 스캔 실시",
+        "completed": false
+      },
+      {
+        "task": "백업 복구 확인",
+        "completed": false
+      },
+      {
+        "task": "사고 보고서 작성",
+        "completed": false
+      }
+    ],
+    "notes": []
+  },
+  {
+    "incident_id": "INC-20251120-100458",
+    "created_at": "2025-11-20T10:04:58.303629",
+    "file_name": "enc (18).exe",
+    "file_path": "/Users/user/Downloads/enc (18).exe",
+    "probability": 0.7433333333333334,
+    "status": "탐지됨",
+    "priority": "높음",
+    "assigned_to": "미지정",
+    "timeline": [
+      {
+        "timestamp": "2025-11-20T10:04:58.303630",
         "status": "탐지됨",
         "description": "랜섬웨어 탐지 (확률: 74.33%)"
       }
